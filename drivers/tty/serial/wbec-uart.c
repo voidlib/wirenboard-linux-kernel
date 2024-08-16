@@ -435,11 +435,12 @@ static void wbec_uart_shutdown(struct uart_port *port)
 	wait_for_completion(&wbec_uart->spi_transfer_complete);
 }
 
-static void wbec_uart_set_termios(struct uart_port *port, struct ktermios *termios, struct ktermios *old)
+static void wbec_uart_set_termios(struct uart_port *, struct ktermios *new,
+				       const struct ktermios *old)
 {
 	printk(KERN_INFO "%s called\n", __func__);
 
-	uart_update_timeout(port, termios->c_cflag, 115200);
+	// uart_update_timeout(port, termios->c_cflag, 115200);
 }
 
 static void wbec_uart_config_port(struct uart_port *port, int flags)
@@ -507,11 +508,12 @@ static const struct uart_ops wbec_uart_ops = {
 	.pm		= wbec_uart_pm,
 };
 
-static int wbec_uart_config_rs485(struct uart_port *port,
+static int wbec_uart_config_rs485(struct uart_port *,
+				  struct ktermios *termios,
 				  struct serial_rs485 *rs485)
 {
 	printk(KERN_INFO "%s called\n", __func__);
-	port->rs485 = *rs485;
+	// port->rs485 = *rs485;
 
 	return 0;
 }
@@ -556,7 +558,7 @@ static int wbec_uart_probe(struct platform_device *pdev)
 	// Initialize the UART port
 	wbec_uart->port.ops = &wbec_uart_ops;
 	wbec_uart->port.dev = &pdev->dev;
-	wbec_uart->port.type = 123;
+	wbec_uart->port.type = PORT_GENERIC;
 	wbec_uart->port.irq = irq;
 	wbec_uart->port.iotype = UPIO_PORT;
 	wbec_uart->port.flags	= UPF_FIXED_TYPE | UPF_LOW_LATENCY;
