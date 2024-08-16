@@ -110,6 +110,7 @@
 
 struct wbec {
 	struct device *dev;
+	struct spi_device *spi;
 	struct regmap *regmap;
 	struct dentry *wbec_dir;
 };

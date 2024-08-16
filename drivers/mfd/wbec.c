@@ -338,6 +338,7 @@ static int wbec_probe(struct spi_device *spi)
 		return -ENOMEM;
 
 	wbec->dev = &spi->dev;
+	wbec->spi = spi;
 
 	spi->mode = SPI_MODE_0;
 	spi->bits_per_word = 8;
