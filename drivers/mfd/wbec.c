@@ -352,17 +352,17 @@ static int wbec_probe(struct spi_device *spi)
 		return PTR_ERR(wbec->regmap);
 	}
 
-	ret = regmap_read(wbec->regmap, WBEC_REG_INFO_WBEC_ID, &wbec_id);
-	if (ret < 0) {
-		dev_err(&spi->dev, "failed to read the wbec id at 0x%X\n",
-			WBEC_REG_INFO_WBEC_ID);
-		return ret;
-	}
-	if (wbec_id != WBEC_ID) {
-		dev_err(&spi->dev, "wrong wbec ID at 0x%X. Get 0x%X istead of 0x%X\n",
-			WBEC_REG_INFO_WBEC_ID, wbec_id, WBEC_ID);
-		return -ENOTSUPP;
-	}
+	// ret = regmap_read(wbec->regmap, WBEC_REG_INFO_WBEC_ID, &wbec_id);
+	// if (ret < 0) {
+	// 	dev_err(&spi->dev, "failed to read the wbec id at 0x%X\n",
+	// 		WBEC_REG_INFO_WBEC_ID);
+	// 	return ret;
+	// }
+	// if (wbec_id != WBEC_ID) {
+	// 	dev_err(&spi->dev, "wrong wbec ID at 0x%X. Get 0x%X istead of 0x%X\n",
+	// 		WBEC_REG_INFO_WBEC_ID, wbec_id, WBEC_ID);
+	// 	return -ENOTSUPP;
+	// }
 
 	ret = sysfs_create_group(&wbec->dev->kobj, &wbec_attr_group);
 	if (ret) {
