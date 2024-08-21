@@ -548,16 +548,19 @@
 		#size-cells = <0>;
 
 		wbec_watchdog: wbec-watchdog@0 {
+			status = "disabled";
 			compatible = "wirenboard,wbec-watchdog";
 			reg = <0>;
 		};
 
 		wbec-pwrkey@0 {
+			status = "disabled";
 			compatible = "wirenboard,wbec-pwrkey";
 			reg = <0>;
 		};
 
 		rtc_onboard: wbec-rtc@0 {
+			status = "disabled";
 			compatible = "wirenboard,wbec-rtc";
 			reg = <0>;
 
@@ -565,6 +568,7 @@
 		};
 
 		wbec_gpio: wbec-gpio@0 {
+			status = "disabled";
 			compatible = "wirenboard,wbec-gpio";
 			reg = <0>;
 
@@ -575,22 +579,26 @@
 		};
 
 		wbec_adc: wbec-adc@0 {
+			status = "disabled";
 			compatible = "wirenboard,wbec-adc";
 			reg = <0>;
 			#io-channel-cells = <1>;
 		};
 
 		vin: wbec-power@0 {
+			status = "disabled";
 			compatible = "wirenboard,wbec-power";
 			reg = <0>;
 		};
 
 		wbec_battery: wbec-battery@0 {
+			status = "disabled";
 			compatible = "wirenboard,wbec-battery";
 			reg = <0>;
 		};
 
 		wbec_pwm: pwm@0 {
+			status = "disabled";
 			compatible = "wirenboard,wbec-pwm";
 			reg = <0>;
 			#pwm-cells = <3>;
