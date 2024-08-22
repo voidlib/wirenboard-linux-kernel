@@ -106,7 +106,7 @@ static void wbec_spi_exchange_sync(struct wbec_uart *wbec_uart)
 	int ret;
 	char str[256];
 
-	tx.header.address = 0x100;
+	tx.header.address = 0x110;
 
 	spi_message_init(&msg);
 
@@ -199,7 +199,7 @@ static void wbec_srart_tx_sync(struct wbec_uart *wbec_uart)
 		struct spi_message msg;
 		struct spi_transfer transfer = {};
 
-		tx_start.header.address = 0x190;
+		tx_start.header.address = 0x1A0;
 
 		spi_message_init(&msg);
 
@@ -326,6 +326,8 @@ static int wbec_uart_startup(struct uart_port *port)
 					      struct wbec_uart,
 					      port);
 	union uart_ctrl uart_ctrl = {};
+	u16 buf[2] = {0x1, 0x0};
+	int ret, val;
 
 	printk(KERN_INFO "%s called\n", __func__);
 
@@ -333,9 +335,14 @@ static int wbec_uart_startup(struct uart_port *port)
 
 	wbec_uart->tx_in_progress = false;
 
-	// wbec_write_regs_sync(wbec_uart->spi, 0x1E0, uart_ctrl.buf, sizeof(uart_ctrl) / 2);
-	// mdelay(1);
-	return 0;
+	// regmap_update_bits(wbec_uart->regmap, 0x100, 0x1, 0x1);
+	regmap_bulk_write(wbec_uart->regmap, 0x100, buf, 2);
+
+	ret = regmap_read_poll_timeout(wbec_uart->regmap, 0x100, val,
+				       !(val & 0x0001),
+				       100, 1000000);
+
+	return ret;
 }
 
 static void wbec_uart_shutdown(struct uart_port *port)
@@ -438,7 +445,7 @@ static int wbec_uart_probe(struct platform_device *pdev)
 	struct wbec *wbec = dev_get_drvdata(pdev->dev.parent);
 	struct wbec_uart *wbec_uart;
 	int ret, irq;
-	u16 wbec_id;
+	int wbec_id;
 
 	dev_info(&pdev->dev, "%s called\n", __func__);
 
@@ -459,8 +466,13 @@ static int wbec_uart_probe(struct platform_device *pdev)
 
 	platform_set_drvdata(pdev, wbec_uart);
 
+	ret = regmap_read(wbec_uart->regmap, 0x00, &wbec_id);
+	if (ret) {
+		dev_err(&pdev->dev, "Failed to read WBE ID: %d\n", ret);
+		return ret;
+	}
 	// ret = wbec_read_regs_sync(wbec->spi, 0x00, &wbec_id, 1);
-	// dev_info(&pdev->dev, "wbec_id 0xB0: %.2X\n", wbec_id);
+	dev_info(&pdev->dev, "wbec_id 0xB0: %.2X\n", wbec_id);
 
 	// Register the UART driver
 	ret = uart_register_driver(&wbec_uart_driver);
