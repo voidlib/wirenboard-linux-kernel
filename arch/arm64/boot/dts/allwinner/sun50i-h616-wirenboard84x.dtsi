@@ -758,6 +758,13 @@
 		drive-strength = <40>;
 	};
 
+	wbio_int_pins: wbio-int-pins {
+		pins = "PE20";
+		function = "gpio_in";
+		bias-pull-up;
+		drive-strength = <10>;
+	};
+
 	/* RS-485-1 */
 	pinctrl_rs485_1_uart_rs485: rs485-1-uart-rs485-pins {
 		pins = "PG15", "PG16";
