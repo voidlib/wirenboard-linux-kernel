@@ -601,6 +601,8 @@
 			reg = <0>;
 			interrupt-parent = <&pio>;
 			interrupts = <PE 7 IRQ_TYPE_EDGE_RISING>;
+
+			linux,rs485-enabled-at-boot-time;
 		};
 	};
 };
