@@ -21,8 +21,7 @@
 
 #define WBEC_UART_PORT_COUNT			2
 
-#define WBEC_REGMAP_PAD_WORDS_COUNT   		5
-#define WBEC_REGMAP_READ_BIT				BIT(15)
+#define WBEC_REGMAP_READ_BIT			BIT(15)
 
 #define WBEC_UART_REGMAP_BUFFER_SIZE		64
 
@@ -43,7 +42,7 @@ static const struct wbec_uart_regmap_address wbec_uart_regmap_address[WBEC_UART_
 	[1] = {
 		.ctrl = 0x108,
 		.status = 0x118,
-		.tx_start = 0x141,
+		.tx_start = 0x121,
 		.exchange = 0x1A1,
 	}
 };
@@ -51,7 +50,7 @@ static const struct wbec_uart_regmap_address wbec_uart_regmap_address[WBEC_UART_
 struct wbec_uart_one_port {
 	struct uart_port port;
 	struct wbec_uart *wbec_uart;
-	bool tx_in_progress;
+	// bool tx_in_progress;
 	bool opened;
 	struct completion tx_complete;
 };
@@ -126,6 +125,14 @@ union uart_ctrl {
 		u16 want_to_tx : 1;
 	};
 	u16 buf[1];
+};
+
+union uart_start_tx_regs {
+	struct {
+		struct wbec_regmap_header header;
+		u16 want_to_tx;
+	};
+	u16 buf[1 + sizeof(struct wbec_regmap_header) / 2];
 };
 
 static struct uart_driver wbec_uart_driver = {
@@ -275,9 +282,9 @@ static void wbec_spi_exchange_sync(struct wbec_uart *wbec_uart)
 			if (bytes_sent > 0) {
 				uart_xmit_advance(port, bytes_sent);
 			} else {
-				if (wbec_one_port->tx_in_progress) {
-					wbec_one_port->tx_in_progress = false;
-				}
+				// if (wbec_one_port->tx_in_progress) {
+				// 	wbec_one_port->tx_in_progress = false;
+				// }
 			}
 
 			printk(KERN_INFO "new_tail=%d\n", xmit->tail);
@@ -296,7 +303,8 @@ static void wbec_spi_exchange_sync(struct wbec_uart *wbec_uart)
 }
 
 struct start_tx_transfer {
-	union uart_tx_regs tx_start;
+	// union uart_tx_regs tx_start;
+	union uart_start_tx_regs tx_start;
 	struct spi_message message;
 	struct spi_transfer transfer;
 };
@@ -317,9 +325,9 @@ static int wbec_start_tx_async(struct wbec_uart_one_port *wbec_one_port)
 
 	struct start_tx_transfer *t;
 
-	if (wbec_one_port->tx_in_progress) {
-		return 0;
-	}
+	// if (wbec_one_port->tx_in_progress) {
+	// 	return 0;
+	// }
 
 	t = kmalloc(sizeof(*t), GFP_ATOMIC);
 	if (!t) {
@@ -333,27 +341,29 @@ static int wbec_start_tx_async(struct wbec_uart_one_port *wbec_one_port)
 	t->transfer.tx_buf = t->tx_start.buf;
 
 
-	to_send = uart_circ_chars_pending(xmit);
+	// to_send = uart_circ_chars_pending(xmit);
 
 
-	printk(KERN_INFO "to_send linux: %d; head=%d, tail=%d\n", to_send, xmit->head, xmit->tail);
-	to_send = min(to_send, ARRAY_SIZE(t->tx_start.tx.bytes_to_send));
-	printk(KERN_INFO "to_send spi: %d\n", to_send);
+	// printk(KERN_INFO "to_send linux: %d; head=%d, tail=%d\n", to_send, xmit->head, xmit->tail);
+	// to_send = min(to_send, ARRAY_SIZE(t->tx_start.tx.bytes_to_send));
+	// printk(KERN_INFO "to_send spi: %d\n", to_send);
 
-	t->tx_start.tx.bytes_to_send_count = to_send;
+	// t->tx_start.tx.bytes_to_send_count = to_send;
 
-	/* Convert to linear buffer */
-	for (i = 0; i < to_send; ++i) {
-		u8 c = xmit->buf[(xmit->tail + i) & (UART_XMIT_SIZE - 1)];
-		t->tx_start.tx.bytes_to_send[i] = c;
-	}
-	uart_xmit_advance(port, to_send);
+	// /* Convert to linear buffer */
+	// for (i = 0; i < to_send; ++i) {
+	// 	u8 c = xmit->buf[(xmit->tail + i) & (UART_XMIT_SIZE - 1)];
+	// 	t->tx_start.tx.bytes_to_send[i] = c;
+	// }
+	// uart_xmit_advance(port, to_send);
 
-	// t->transfer.len = (1 + 5 + 1 + 1 + (to_send + 1) / 2) * 2;
-	t->transfer.len = sizeof(struct wbec_regmap_header) + 2 + to_send;
-	// round up to 2
-	t->transfer.len = (t->transfer.len + 1) & ~1;
+	// // t->transfer.len = (1 + 5 + 1 + 1 + (to_send + 1) / 2) * 2;
+	// t->transfer.len = sizeof(struct wbec_regmap_header) + 2 + to_send;
+	// // round up to 2
+	// t->transfer.len = (t->transfer.len + 1) & ~1;
 
+	t->tx_start.want_to_tx = 1;
+	t->transfer.len = sizeof(union uart_start_tx_regs);
 
 	swap_bytes(t->tx_start.buf, ARRAY_SIZE(t->tx_start.buf));
 
@@ -366,7 +376,7 @@ static int wbec_start_tx_async(struct wbec_uart_one_port *wbec_one_port)
 		kfree(t);
 		return ret;
 	}
-	wbec_one_port->tx_in_progress = true;
+	// wbec_one_port->tx_in_progress = true;
 	return 0;
 }
 
@@ -469,7 +479,7 @@ static int wbec_uart_startup(struct uart_port *port)
 	// uart_ctrl.reset = 1;
 
 	mutex_lock(&wbec_one_port->wbec_uart->mutex);
-	wbec_one_port->tx_in_progress = false;
+	// wbec_one_port->tx_in_progress = false;
 
 	// regmap_update_bits(wbec_uart->regmap, ctrl_reg, 0x1, 0x1);
 	regmap_bulk_write(regmap, ctrl_reg, buf, 2);
